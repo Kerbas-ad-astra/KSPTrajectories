@@ -52,8 +52,8 @@ namespace Trajectories
         [Persistent(Default: 15)]
         public int MaxFramesPerPatch { get; set; }
 
-        [Persistent(Default: false)]
-        public bool AutoPilotAvailable { get; set; }
+        [Persistent(Default: true)]
+        public bool UseCache { get; set; }
 
         private KSP.IO.PluginConfiguration config;
 

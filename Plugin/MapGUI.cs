@@ -1,4 +1,5 @@
-﻿using System;
+﻿using KSP.UI.Screens;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -67,7 +68,7 @@ namespace Trajectories
             if (HighLogic.LoadedScene != GameScenes.FLIGHT)
                 return;
 
-            if (!MapView.MapIsEnabled || MapView.MapCamera == null)
+            if (!MapView.MapIsEnabled || PlanetariumCamera.Camera == null)
                 return;
 
             Settings.fetch.MapGUIWindowPos = new Rect(Settings.fetch.MapGUIWindowPos.xMin, Settings.fetch.MapGUIWindowPos.yMin, Settings.fetch.MapGUIWindowPos.width, Settings.fetch.MapGUIWindowPos.height - 1);
@@ -147,7 +148,7 @@ namespace Trajectories
             {
                 GUI.enabled = traj.targetPosition.HasValue;
                 if (GUILayout.Button("Unset target"))
-                    Trajectory.SetTarget();
+                    traj.SetTarget();
                 GUI.enabled = true;
 
                 GUILayout.BeginHorizontal();
@@ -155,7 +156,7 @@ namespace Trajectories
                 GUI.enabled = (patch != null && patch.impactPosition.HasValue);
                 if (GUILayout.Button("Set current impact", GUILayout.Width(150)))
                 {
-                    Trajectory.SetTarget(patch.startingState.referenceBody, patch.impactPosition);
+                    traj.SetTarget(patch.startingState.referenceBody, patch.impactPosition);
                 }
                 GUI.enabled = true;
                 if (GUILayout.Button("Set KSC", GUILayout.Width(70)))
@@ -164,7 +165,7 @@ namespace Trajectories
                     if (body != null)
                     {
                         Vector3d worldPos = body.GetWorldSurfacePosition(-0.04860002, -74.72425635, 2.0);
-                        Trajectory.SetTarget(body, worldPos - body.position);
+                        traj.SetTarget(body, worldPos - body.position);
                     }
                 }
                 GUILayout.EndHorizontal();
@@ -181,7 +182,7 @@ namespace Trajectories
                         if(Double.TryParse(latLng[0].Trim(), out lat) && Double.TryParse(latLng[1].Trim(), out lng))
                         {
                             Vector3d worldPos = body.GetWorldSurfacePosition(lat, lng, 2.0);
-                            Trajectory.SetTarget(body, worldPos - body.position);
+                            traj.SetTarget(body, worldPos - body.position);
                         }
                     }
                 }
@@ -214,6 +215,10 @@ namespace Trajectories
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
+                Settings.fetch.UseCache = GUILayout.Toggle(Settings.fetch.UseCache, new GUIContent("Use Cache", "Toggle cache usage. Trajectory will be more precise when cache disabled, but computation time will be higher. It's not recommended to keep it unchecked, unless your CPU can handle the load."), GUILayout.Width(80));
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
                 Settings.fetch.AutoUpdateAerodynamicModel = GUILayout.Toggle(Settings.fetch.AutoUpdateAerodynamicModel, new GUIContent("Auto update", "Auto-update of the aerodynamic model. For example if a part is decoupled, the model needs to be updated. This is independent from trajectory update."));
                 if (GUILayout.Button("Update now"))
                     traj.InvalidateAerodynamicModel();
@@ -223,9 +228,6 @@ namespace Trajectories
                 {
                     Settings.fetch.UseBlizzyToolbar = GUILayout.Toggle(Settings.fetch.UseBlizzyToolbar, new GUIContent("Use Blizzy's toolbar", "Will take effect after restart"));
                 }
-
-                //Settings.fetch.AutoPilotAvailable = GUILayout.Toggle(Settings.fetch.AutoPilotAvailable, new GUIContent("Unlock auto-pilot (EXPERIMENTAL)", "Enables the auto-pilot interface. This is experimental, subject to change, and might crash your spaceplanes more often than not."));
-                Settings.fetch.AutoPilotAvailable = false; // auto-pilot disabled because it's incompatible with Remote Tech in its current implementation (and has some other bugs anyway)
 
                 if(FlightGlobals.ActiveVessel != null)
                 {
@@ -238,7 +240,7 @@ namespace Trajectories
                     GUILayout.EndHorizontal();
                 }
 
-                GUILayout.Label("Aerodynamic model: " + VesselAerodynamicModel.AerodynamicModelName);
+                GUILayout.Label("Aerodynamic model: " + traj.AerodynamicModelName);
                 GUILayout.BeginHorizontal();
                 GUILayout.Label("Perf: " + (traj.ComputationTime * 1000.0f).ToString("0.0") + "ms (" + (traj.ComputationTime/traj.GameFrameTime*100.0f).ToString("0") + "%)", GUILayout.Width(120));
                 GUILayout.Label(traj.ErrorCount + " error(s)", GUILayout.Width(80));
