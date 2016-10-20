@@ -132,7 +132,7 @@ namespace Trajectories
             if (lastPatch != null && lastPatch.impactPosition.HasValue)
             {
                 Vector3 up = lastPatch.impactPosition.Value.normalized;
-                Vector3 vel = lastPatch.impactVelocity - lastPatch.startingState.referenceBody.getRFrmVel(lastPatch.impactPosition.Value + lastPatch.startingState.referenceBody.position);
+                Vector3 vel = lastPatch.impactVelocity.Value - lastPatch.startingState.referenceBody.getRFrmVel(lastPatch.impactPosition.Value + lastPatch.startingState.referenceBody.position);
                 float vVelMag = Vector3.Dot(vel, up);
                 Vector3 vVel = up * vVelMag;
                 float hVelMag = (vel - vVel).magnitude;
@@ -172,7 +172,7 @@ namespace Trajectories
 
                 GUILayout.BeginHorizontal();
                 coords = GUILayout.TextField(coords, GUILayout.Width(170));
-                if (GUILayout.Button(new GUIContent("Set", "Enter target latitude and longitude, separated by a comma"), GUILayout.Width(50)))
+                if (GUILayout.Button(new GUIContent("Set", "Enter target latitude and longitude, separated by a comma, in decimal format (with a dot for decimal separator)"), GUILayout.Width(50)))
                 {
                     string[] latLng = coords.Split(new char[] { ',', ';' });
                     var body = FlightGlobals.currentMainBody;
@@ -181,8 +181,9 @@ namespace Trajectories
                         double lat, lng;
                         if(Double.TryParse(latLng[0].Trim(), out lat) && Double.TryParse(latLng[1].Trim(), out lng))
                         {
-                            Vector3d worldPos = body.GetWorldSurfacePosition(lat, lng, 2.0);
-                            traj.SetTarget(body, worldPos - body.position);
+                            Vector3d relPos = body.GetWorldSurfacePosition(lat, lng, 2.0) - body.position;
+							double altitude = Trajectory.GetGroundAltitude(body, relPos) + body.Radius;
+                            traj.SetTarget(body, relPos * (altitude / relPos.magnitude));
                         }
                     }
                 }
@@ -268,7 +269,7 @@ namespace Trajectories
                 Debug.Log("Using Blizzy toolbar for Trajectories GUI");
                 GUIToggleButtonBlizzy = ToolbarManager.Instance.add("Trajectories", "ToggleUI");
                 GUIToggleButtonBlizzy.Visibility = FlightMapVisibility.Instance;
-                GUIToggleButtonBlizzy.TexturePath = "Trajectories/Textures/icon-blizzy";
+                GUIToggleButtonBlizzy.TexturePath = "Trajectories/Textures/icon-blizzy1";
                 GUIToggleButtonBlizzy.ToolTip = "Right click toggles Trajectories window";
                 GUIToggleButtonBlizzy.OnClick += OnToggleGUIBlizzy;
             }
